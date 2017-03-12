@@ -3,14 +3,24 @@
 <head>
   <meta charset="utf-8">
   
-  <title>Hexo</title>
+  <title>有关Keychain服务，你需要了解这些 | Hexo</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta property="og:type" content="website">
-<meta property="og:title" content="Hexo">
-<meta property="og:url" content="http://yoursite.com/index.html">
+  <meta name="description" content="在iOS系统中，Keychain提供了安全的存储服务，用来存储一些敏感信息。但是在日常开发中，我们经常会忽视这个苹果自荐的功能，本文的目的就是引起开发者的重视，敏感信息尽量使用Keychain服务。
+
+NSUserDefaults不安全NSUserDefaults其实是plist文件中键值存储，并且最大的问题是存在与沙盒中，这就对安全性埋下了隐患。如果攻击者破解app，拿到了沙盒中的数据，就会造">
+<meta property="og:type" content="article">
+<meta property="og:title" content="有关Keychain服务，你需要了解这些">
+<meta property="og:url" content="http://yoursite.com/2017/02/20/有关Keychain服务，你需要了解这些/index.html">
 <meta property="og:site_name" content="Hexo">
+<meta property="og:description" content="在iOS系统中，Keychain提供了安全的存储服务，用来存储一些敏感信息。但是在日常开发中，我们经常会忽视这个苹果自荐的功能，本文的目的就是引起开发者的重视，敏感信息尽量使用Keychain服务。
+
+NSUserDefaults不安全NSUserDefaults其实是plist文件中键值存储，并且最大的问题是存在与沙盒中，这就对安全性埋下了隐患。如果攻击者破解app，拿到了沙盒中的数据，就会造">
+<meta property="og:updated_time" content="2017-03-12T06:23:31.000Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Hexo">
+<meta name="twitter:title" content="有关Keychain服务，你需要了解这些">
+<meta name="twitter:description" content="在iOS系统中，Keychain提供了安全的存储服务，用来存储一些敏感信息。但是在日常开发中，我们经常会忽视这个苹果自荐的功能，本文的目的就是引起开发者的重视，敏感信息尽量使用Keychain服务。
+
+NSUserDefaults不安全NSUserDefaults其实是plist文件中键值存储，并且最大的问题是存在与沙盒中，这就对安全性埋下了隐患。如果攻击者破解app，拿到了沙盒中的数据，就会造">
   
     <link rel="alternate" href="/atom.xml" title="Hexo" type="application/atom+xml">
   
@@ -59,9 +69,7 @@
   </div>
 </header>
       <div class="outer">
-        <section id="main">
-  
-    <article id="post-有关Keychain服务，你需要了解这些" class="article article-type-post" itemscope itemprop="blogPost">
+        <section id="main"><article id="post-有关Keychain服务，你需要了解这些" class="article article-type-post" itemscope itemprop="blogPost">
   <div class="article-meta">
     <a href="/2017/02/20/有关Keychain服务，你需要了解这些/" class="article-date">
   <time datetime="2017-02-20T06:15:44.000Z" itemprop="datePublished">2017-02-20</time>
@@ -74,8 +82,8 @@
       <header class="article-header">
         
   
-    <h1 itemprop="name">
-      <a class="article-title" href="/2017/02/20/有关Keychain服务，你需要了解这些/">有关Keychain服务，你需要了解这些</a>
+    <h1 class="article-title" itemprop="name">
+      有关Keychain服务，你需要了解这些
     </h1>
   
 
@@ -112,10 +120,9 @@
     </footer>
   </div>
   
-</article>
-
-
+    
   
+</article>
 
 </section>
         
