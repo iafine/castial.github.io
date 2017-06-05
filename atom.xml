@@ -5,7 +5,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="http://yoursite.com/"/>
-  <updated>2017-04-26T13:26:31.000Z</updated>
+  <updated>2017-06-05T10:23:19.000Z</updated>
   <id>http://yoursite.com/</id>
   
   <author>
@@ -14,6 +14,86 @@
   </author>
   
   <generator uri="http://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>iOS小结之copy属性</title>
+    <link href="http://yoursite.com/2017/06/05/iOS%E5%B0%8F%E7%BB%93%E4%B9%8Bcopy%E5%B1%9E%E6%80%A7/"/>
+    <id>http://yoursite.com/2017/06/05/iOS小结之copy属性/</id>
+    <published>2017-06-05T10:21:19.000Z</published>
+    <updated>2017-06-05T10:23:19.000Z</updated>
+    
+    <content type="html"><![CDATA[<blockquote>
+<p>一直都想去写个系列出来，总结出自己在日常开发中遇到过的知识点，时不时的回头看看，温故而知新。</p>
+</blockquote>
+<p>小结第一篇，来总结一下iOS开发中有关copy的知识点。</p>
+<a id="more"></a>
+<h3 id="iOS中，深拷贝和浅拷贝有什么不同？"><a href="#iOS中，深拷贝和浅拷贝有什么不同？" class="headerlink" title="iOS中，深拷贝和浅拷贝有什么不同？"></a>iOS中，深拷贝和浅拷贝有什么不同？</h3><h4 id="浅拷贝"><a href="#浅拷贝" class="headerlink" title="浅拷贝"></a>浅拷贝</h4><p>所谓的浅拷贝，就是指只是将对象内存地址多了一个引用，也就是说，拷贝结束之后，两个对象的值不仅相同，而且对象所指的内存地址都是一样的。</p>
+<h4 id="深拷贝"><a href="#深拷贝" class="headerlink" title="深拷贝"></a>深拷贝</h4><p>所谓深拷贝，就是指拷贝一个对象的具体内容，拷贝结束之后，两个对象的值虽然是相同的，但是指向的内存地址是不同的。两个对象之间也互不影响，互不干扰。</p>
+<h4 id="非集合类对象的copy和mutableCopy"><a href="#非集合类对象的copy和mutableCopy" class="headerlink" title="非集合类对象的copy和mutableCopy"></a>非集合类对象的copy和mutableCopy</h4><p>我们对一个NSString属性进行copy和mutableCopy。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">NSString *string = @&quot;abc&quot;;</div><div class="line">NSString *stringCopy = [string copy];</div><div class="line">NSMutableString *stringMCopy = [string mutableCopy];</div><div class="line"></div><div class="line">NSLog(@&quot;string: %p, %p&quot;, string, &amp;string);</div><div class="line">NSLog(@&quot;stringCopy: %p, %p&quot;, stringCopy, &amp;stringCopy);</div><div class="line">NSLog(@&quot;stringMCopy: %p, %p&quot;, stringMCopy, &amp;stringMCopy);</div></pre></td></tr></table></figure>
+<p>运行之后，可以发现：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">string: 0x1022fe078, 0x7fff5d901a48</div><div class="line">stringCopy: 0x1022fe078, 0x7fff5d901a40</div><div class="line">stringMCopy: 0x608000260240, 0x7fff5d901a38</div></pre></td></tr></table></figure>
+<p>可以看出，对NSString进行copy操作，其新对象的内存地址并没有发生变化，改变的只仅仅是指针的地址，但是进行mutableCopy操作，其内存地址已经发生了变化，并且指针地址发生变化。我们将内存地址发生了变化的copy操作，称之为深拷贝，反之，内存地址没有发生了变化，称之为浅拷贝。</p>
+<p>接下来，我们对NSMutableString进行copy和mutableCopy.</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">NSMutableString *string = [NSMutableString stringWithFormat:@&quot;abc&quot;];</div><div class="line">NSString *stringCopy = [string copy];</div><div class="line">NSMutableString *stringMCopy = [string mutableCopy];</div><div class="line"></div><div class="line">NSLog(@&quot;string: %p, %p&quot;, string, &amp;string);</div><div class="line">NSLog(@&quot;stringCopy: %p, %p&quot;, stringCopy, &amp;stringCopy);</div><div class="line">NSLog(@&quot;stringMCopy: %p, %p&quot;, stringMCopy, &amp;stringMCopy);</div></pre></td></tr></table></figure>
+<p>运行之后，我们可以发现：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">string: 0x608000264680, 0x7fff5526aa48</div><div class="line">stringCopy: 0xa000000006362613, 0x7fff5526aa40</div><div class="line">stringMCopy: 0x608000264940, 0x7fff5526aa38</div></pre></td></tr></table></figure>
+<p>对NSMutableString进行copy操作，其内存地址和指针地址都发生了变化，所以操作是深拷贝，和上面有所不同；进行mutableCopy操作，其内存地址和指针地址也都发生了变化，所以也是深拷贝。</p>
+<blockquote>
+<p>以上，我们可以得出，在非集合类对象中，对不可变对象进行copy操作，只仅仅是指针复制，进行mutableCopy操作，是内容复制。</p>
+<p>对可变对象进行copy和mutableCopy操作，都是内容复制。</p>
+</blockquote>
+<h4 id="集合类对象的copy和mutableCopy"><a href="#集合类对象的copy和mutableCopy" class="headerlink" title="集合类对象的copy和mutableCopy"></a>集合类对象的copy和mutableCopy</h4><p>我们以NSArray为例，对其进行copy和mutableCopy操作。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line">NSString *element_01 = @&quot;abc&quot;;</div><div class="line">NSString *element_02 = @&quot;def&quot;;</div><div class="line">NSString *element_03 = @&quot;ghi&quot;;</div><div class="line">NSArray *array = @[element_01, element_02, element_03];</div><div class="line">NSArray *arrayCopy = [array copy];</div><div class="line">NSMutableArray *arrayMCopy = [array mutableCopy];</div><div class="line"></div><div class="line">NSLog(@&quot;array: %p, %p; array.firstObject: %p&quot;, array, &amp;array, array.firstObject);</div><div class="line">NSLog(@&quot;arrayCopy: %p, %p; arrayCopy.firstObject: %p&quot;, arrayCopy, &amp;arrayCopy, arrayCopy.firstObject);</div><div class="line">NSLog(@&quot;arrayMCopy: %p, %p; arrayMCopy.firstObject: %p&quot;, arrayMCopy, &amp;arrayMCopy, arrayMCopy.firstObject);</div></pre></td></tr></table></figure>
+<p>运行之后，结果如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">array: 0x600000245910, 0x7fff51367a10; array.firstObject: 0x10e898088</div><div class="line">arrayCopy: 0x600000245910, 0x7fff51367a08; arrayCopy.firstObject: 0x10e898088</div><div class="line">arrayMCopy: 0x600000245670, 0x7fff51367a00; arrayMCopy.firstObject: 0x10e898088</div></pre></td></tr></table></figure>
+<p>可以发现，规律和非集合类的很像，对NSArray进行copy操作的时候，数组的内存地址没有发生变化，但是进行mutableCopy操作时，其内存地址发生了变化，结论跟非集合类的差不多。</p>
+<p>但是，这里的深拷贝和非集合类的深拷贝还是不太一样的，上面我们打印出了数组的第一个元素的内存地址，可以发现，进行mutableCopy操作时，虽然数组内存地址发生了变化，但是数组元素的内存地址并没有发生变化。</p>
+<p>这个属于一个特例，我们称它为<strong>单层深复制</strong>。并不是理论上的完全深复制。</p>
+<p>接下来，我们以NSMutableArray为例，进行copy和mutableCopy操作。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line">NSString *element_01 = @&quot;abc&quot;;</div><div class="line">NSString *element_02 = @&quot;def&quot;;</div><div class="line">NSString *element_03 = @&quot;ghi&quot;;</div><div class="line">NSMutableArray *array = [NSMutableArray arrayWithArray:@[element_01, element_02, element_03]];</div><div class="line"></div><div class="line">NSArray *arrayCopy = [array copy];</div><div class="line">NSMutableArray *arrayMCopy = [array mutableCopy];</div><div class="line"></div><div class="line">NSLog(@&quot;array: %p, %p; array.firstObject: %p&quot;, array, &amp;array, array.firstObject);</div><div class="line">NSLog(@&quot;arrayCopy: %p, %p; arrayCopy.firstObject: %p&quot;, arrayCopy, &amp;arrayCopy, arrayCopy.firstObject);</div><div class="line">NSLog(@&quot;arrayMCopy: %p, %p; arrayMCopy.firstObject: %p&quot;, arrayMCopy, &amp;arrayMCopy, arrayMCopy.firstObject);</div></pre></td></tr></table></figure>
+<p>运行之后，结果如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">array: 0x6000000460c0, 0x7fff516d3a10; array.firstObject: 0x10e52c088</div><div class="line">arrayCopy: 0x600000046420, 0x7fff516d3a08; arrayCopy.firstObject: 0x10e52c088</div><div class="line">arrayMCopy: 0x600000046000, 0x7fff516d3a00; arrayMCopy.firstObject: 0x10e52c088</div></pre></td></tr></table></figure>
+<p>可以看出，对NSMutableArray进行copy和mutableCopy操作，其内存地址都发生了变化，但是，对于数组中的元素，不管是进行的哪种操作，内存地址始终都没有发生变化，所以属于单层深拷贝。</p>
+<blockquote>
+<p>所以，我们可以得出，对于不可变的集合类对象进行copy操作，只是改变了指针，其内存地址并没有发生变化；进行mutableCopy操作，内存地址发生了变化，但是其中的元素内存地址并没有发生变化。</p>
+<p>对于可变集合类对象，不管是进行copy操作还是mutableCopy操作，其内存地址都发生了变化，但是其中的元素内存地址都没有发生变化，属于单层深拷贝。</p>
+</blockquote>
+<h3 id="为什么我们声明NSString-NSArray或者NSDictionary的时候，经常使用copy关键字，使用strong有什么区别？"><a href="#为什么我们声明NSString-NSArray或者NSDictionary的时候，经常使用copy关键字，使用strong有什么区别？" class="headerlink" title="为什么我们声明NSString, NSArray或者NSDictionary的时候，经常使用copy关键字，使用strong有什么区别？"></a>为什么我们声明NSString, NSArray或者NSDictionary的时候，经常使用copy关键字，使用strong有什么区别？</h3><p>这种场景，在定义model时出现最多，首先我们先来看看用copy和strong有什么区别？</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div></pre></td><td class="code"><pre><div class="line">/********************* test.h **********************/</div><div class="line">@interface test()</div><div class="line"></div><div class="line">@property (nonatomic, strong) NSString *strStrong;</div><div class="line">@property (nonatomic, copy) NSString *strCopy;</div><div class="line"></div><div class="line">@end</div><div class="line"></div><div class="line">/********************* test.m **********************/</div><div class="line">NSMutableString *string = [NSMutableString stringWithFormat:@&quot;abc&quot;];</div><div class="line">self.strStrong = string;</div><div class="line">self.strCopy = string;</div><div class="line">NSLog(@&quot;旧strStrong: %@&quot;, self.strStrong);</div><div class="line">NSLog(@&quot;旧strCopy: %@&quot;, self.strCopy);</div><div class="line"></div><div class="line">[string appendFormat:@&quot;def&quot;];</div><div class="line">NSLog(@&quot;新strStrong: %@&quot;, self.strStrong);</div><div class="line">NSLog(@&quot;新strCopy: %@&quot;, self.strCopy);</div></pre></td></tr></table></figure>
+<p>运行之后，可以发现：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">旧strStrong: abc</div><div class="line">旧strCopy: abc</div><div class="line">新strStrong: abcdef</div><div class="line">新strCopy: abc</div></pre></td></tr></table></figure>
+<p>可以发现，当将一个可变对象分别赋值给两个使用不同修饰词的属性后，改变可变对象的内容，使用strong修饰的会跟随着改变，但使用copy修饰的没有改变内容。</p>
+<p>知道了strong和copy修饰的区别之后，我们来看为什么要用copy？因为属性需要有封装性，当赋值之后，如果改变其值，会打破本有的封装，所以，在日常大部分开发工作中，我们需要使用copy来修饰NSString等。</p>
+<p>那么，是不是NSMutableString等这些可变对象是不是也需要copy来修饰呢？答案是千万不要这么干，我们可以测试一下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line">/********************* test.h **********************/</div><div class="line">@interface test()</div><div class="line"></div><div class="line">@property (nonatomic, copy) NSMutableString *strCopy;</div><div class="line"></div><div class="line">@end</div><div class="line"></div><div class="line">/********************* test.m **********************/</div><div class="line">NSMutableString *string = [NSMutableString stringWithFormat:@&quot;abc&quot;];</div><div class="line">self.strCopy = string;</div><div class="line">[self.strCopy appendString:@&quot;def&quot;];</div></pre></td></tr></table></figure>
+<p>运行上面代码，就会发现，在运行到最后一句的时候会崩溃，因为copy是复制出一个不可变的对象，在不可变对象上运行可变对象的方法，就会找不到执行方法，报下面的错误：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">reason: &apos;-[NSTaggedPointerString appendString:]: unrecognized selector sent to instance 0xa000000006362613&apos;</div></pre></td></tr></table></figure>
+<h3 id="自定义对象实现copy"><a href="#自定义对象实现copy" class="headerlink" title="自定义对象实现copy"></a>自定义对象实现copy</h3><p>有时候，我们需要实现自定义的对象进行copy操作，如下所示：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line">/********************* CopyModel.h **********************/</div><div class="line">@interface CopyModel : NSObject</div><div class="line"></div><div class="line">@property (nonatomic, copy) NSString *title;</div><div class="line">@property (nonatomic, copy) NSString *name;</div><div class="line"></div><div class="line">@end</div><div class="line"></div><div class="line">/********************* ViewController.m **********************/</div><div class="line">CopyModel *model = [[CopyModel alloc] init];</div><div class="line">model.title = @&quot;title&quot;;</div><div class="line">model.name = @&quot;name&quot;;</div><div class="line"></div><div class="line">CopyModel *modelCopy = [model copy];</div></pre></td></tr></table></figure>
+<p>但是，一运行我们发现直接崩溃了，报了一下错误：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">reason: &apos;-[CopyModel copyWithZone:]: unrecognized selector sent to instance 0x608000221c60&apos;</div></pre></td></tr></table></figure>
+<p>可以看出，自定义对象实现copy操作，需要重写<code>copyWithZone</code>方法，我们修改下代码，如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div></pre></td><td class="code"><pre><div class="line">/********************* CopyModel.h **********************/</div><div class="line">@interface CopyModel : NSObject</div><div class="line"></div><div class="line">@property (nonatomic, copy) NSString *title;</div><div class="line">@property (nonatomic, copy) NSString *name;</div><div class="line"></div><div class="line">@end</div><div class="line"></div><div class="line">/********************* CopyModel.m **********************/</div><div class="line">@implementation CopyModel</div><div class="line"></div><div class="line">- (instancetype)copyWithZone:(NSZone *)zone &#123;</div><div class="line">    CopyModel *copyModel = [[CopyModel allocWithZone:zone] init];</div><div class="line">    copyModel.title = self.title;</div><div class="line">    copyModel.name = self.name;</div><div class="line">    return copyModel;</div><div class="line">&#125;</div><div class="line"></div><div class="line">@end</div><div class="line"></div><div class="line">/********************* ViewController.m **********************/</div><div class="line">CopyModel *model = [[CopyModel alloc] init];</div><div class="line">model.title = @&quot;title&quot;;</div><div class="line">model.name = @&quot;name&quot;;</div><div class="line"></div><div class="line">CopyModel *modelCopy = [model copy];</div><div class="line">NSLog(@&quot;model: %p, %p&quot;, model, &amp;model);</div><div class="line">NSLog(@&quot;modelCopy: %p, %p&quot;, modelCopy, &amp;modelCopy);</div></pre></td></tr></table></figure>
+<p>执行之后，可以发现并没有报错，并且copy也成功了。控制台打印如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">model: 0x608000037660, 0x7fff5bd62a48</div><div class="line">modelCopy: 0x60800003afa0, 0x7fff5bd62a40</div></pre></td></tr></table></figure>
+<p>说明我们自定义对象copy成功了!</p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>这是当前遇到的有关copy问题的总结，应该还算挺全的，希望能帮助到需要的同学！</p>
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;blockquote&gt;
+&lt;p&gt;一直都想去写个系列出来，总结出自己在日常开发中遇到过的知识点，时不时的回头看看，温故而知新。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;小结第一篇，来总结一下iOS开发中有关copy的知识点。&lt;/p&gt;
+    
+    </summary>
+    
+    
+      <category term="iOS" scheme="http://yoursite.com/tags/iOS/"/>
+    
+  </entry>
   
   <entry>
     <title>iOS中遍历的总结</title>

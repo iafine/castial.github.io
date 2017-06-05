@@ -78,7 +78,7 @@
 <h3 id="MQTT实现消息推送"><a href="#MQTT实现消息推送" class="headerlink" title="MQTT实现消息推送"></a>MQTT实现消息推送</h3><h4 id="iOS端实现"><a href="#iOS端实现" class="headerlink" title="iOS端实现"></a>iOS端实现</h4><p>对于iOS端使用MQTT来实现消息推送服务，比较常见的做法就是采用离线消息的方式去做，服务端发送推送消息，发送到APNs上，然后APNs通知客户端收到通知消息，客户端去服务端拉取最新消息列表，然后展示的界面上并处理相关逻辑。</p>
 <h4 id="Android端实现"><a href="#Android端实现" class="headerlink" title="Android端实现"></a>Android端实现</h4><p>由于并不是做Android开发，并且Android方面采用方式五花八门，了解的做法是类似iOS的实现，利用MQTT将服务端和客户端建议一个长连接，然后服务端将消息直接推倒客户端上，客户端收到推送消息后，去服务端拉取最新的消息列表。</p>
 <h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>对于移动设备来说，MQTT以低开销、低带宽著称，十分适合搭建推送服务。目前方案也比较成熟，希望未来MQTT的应用会越来越广！</p>
-</div></article></div></main><footer><div class="paginator"><a href="/2017/04/20/iOS中遍历的总结/" class="prev">PREV</a><a href="/2017/02/20/有关Keychain服务，你需要了解这些/" class="next">NEXT</a></div><div id="disqus_thread"></div><script>var disqus_shortname = 'hyyyblog';
+</div></article></div></main><footer><div class="paginator"><a href="/2017/04/20/iOS中遍历的总结/" class="prev">上一篇</a><a href="/2017/02/20/有关Keychain服务，你需要了解这些/" class="next">下一篇</a></div><div id="disqus_thread"></div><script>var disqus_shortname = 'hyyyblog';
 var disqus_identifier = '2017/04/02/MQTT协议及推送服务/';
 var disqus_title = 'MQTT协议及推送服务';
 var disqus_url = 'http://yoursite.com/2017/04/02/MQTT协议及推送服务/';
