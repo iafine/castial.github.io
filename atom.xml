@@ -1,32 +1,116 @@
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
-  <title>Hexo</title>
+  <title>Hyyy的技术博客</title>
   
   <link href="/atom.xml" rel="self"/>
   
   <link href="http://yoursite.com/"/>
-  <updated>2017-06-05T10:23:19.000Z</updated>
+  <updated>2017-06-11T07:39:42.000Z</updated>
   <id>http://yoursite.com/</id>
   
   <author>
-    <name>John Doe</name>
+    <name>Hyyy</name>
     
   </author>
   
   <generator uri="http://hexo.io/">Hexo</generator>
   
   <entry>
+    <title>iOS小结之Runloop</title>
+    <link href="http://yoursite.com/2017/06/11/iOS%E5%B0%8F%E7%BB%93%E4%B9%8BRunloop/"/>
+    <id>http://yoursite.com/2017/06/11/iOS小结之Runloop/</id>
+    <published>2017-06-11T07:34:03.000Z</published>
+    <updated>2017-06-11T07:39:42.000Z</updated>
+    
+    <content type="html"><![CDATA[<blockquote>
+<p>小结第二篇，来总结下Runloop的知识。</p>
+</blockquote>
+<h3 id="Runloop概述"><a href="#Runloop概述" class="headerlink" title="Runloop概述"></a>Runloop概述</h3><p>学过操作系统的同学都知道，一般来说，一条线程只能执行一个任务，当任务结束后，线程就会退出，完成使命。但是，在很多场景中，我们并不想让线程执行完任务就退出，往往，我们需要其保持随时随地听从命令，可以在需要的时候执行任务，不需要的时候处于等待状态。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">function loop() &#123;</div><div class="line">    initLoop();</div><div class="line">    do &#123;</div><div class="line">        if(message_hasTask()) &#123;</div><div class="line">            message_execute(get_current_message());</div><div class="line">        &#125;</div><div class="line">    &#125; while (message != quit);</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>比如，在手游上，我们需要一个模型来一直监听用户的触摸事件，来对游戏画面进行切换和逻辑判断。这种模型一般都具有相似性。比如：当模型被事件唤醒之后，如何快速地进行响应；当模型处于等待状态时，如何减少资源耗用等等。</p>
+<p>这种模型，在iOS中称作Runloop。Runloop所解决的问题，就是实现一个线程，使得可以随时响应用户的事件，而不退出。</p>
+<a id="more"></a>
+<p>在iOS中，提供了两种有关的对象，一种是<code>NSRunLoop</code>，另外一种是<code>CFRunLoopRef</code>。<code>CFRunLoopRef</code>是基于<code>CoreFoundation</code>框架的，提供了纯C函数的API，所以这些API都是线程安全的。我们一般听到的<code>NSRunLoop</code>，是对<code>CFRunLoopRef</code>的封装，加上了面向对象的东西，所以这些API不是安全的。</p>
+<p>所以，一般讲解<code>Runloop</code>的文章，其实都是在分析<code>CFRunLoopRef</code>这个东西。<code>CFRunLoopRef</code>的具体实现，苹果也将它开源了出来，可以在引用里看到其链接，这里就不再给出。</p>
+<h3 id="Runloop和线程"><a href="#Runloop和线程" class="headerlink" title="Runloop和线程"></a>Runloop和线程</h3><p>上面可以看出，需要实现一个Runloop模型，是基于线程之上的。所以，Runloop和线程是息息相关的，在iOS系统中，Runloop属于线程的基础架构部分。每个线程，包括程序的主线程，都有与之的Runloop模型。</p>
+<p>其实，Runloop和线程的绑定，是保存在一个全局的Dictionary中，线程和Runloop之间是一一对应的。当线程创建后，默认并不会启动Runloop，只有主动获取的时候，Runloop才会被创建，当线程结束后，对应的Runloop也会随之销毁。但是有个例外，就是主线程对应的Runloop默认是启动的。当程序启动的时候，会执行下面的函数：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">int main(int argc, char * argv[]) &#123;</div><div class="line">   @autoreleasepool &#123;</div><div class="line">       return UIApplicationMain(argc, argv, nil, NSStringFromClass([AppDelegate class]));</div><div class="line">   &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>其中，在<code>UIApplicationMain</code>内部帮我们开启了主线程的Runloop，相当于说，主线程的Runloop是默认启动的。这样我们才可以监听触摸事件、页面刷新等等功能。</p>
+<h3 id="Runloop结构"><a href="#Runloop结构" class="headerlink" title="Runloop结构"></a>Runloop结构</h3><p>Runloop主要由5个类组成。如下所示：</p>
+<ul>
+<li>CFRunLoopRef</li>
+<li>CFRunLoopModeRef</li>
+<li>CFRunLoopSourceRef</li>
+<li>CFRunLoopTimerRef</li>
+<li>CFRunLoopObserverRef</li>
+</ul>
+<p>其关系如下图：</p>
+<p><img src="http://blog.ibireme.com/wp-content/uploads/2015/05/RunLoop_0.png" alt="Runloop关系图"></p>
+<p>一个Runloop包含多个Mode，每个Mode里面又包含多个Source/Timer/Observer。但是，需要注意的是，每次开启Runloop的时候，只会使用其中一个Mode，一般叫做currentMode。有时候实际场景中需要切换Mode，切换的时候，只能先退出Mode，然后再添加上新的Mode。</p>
+<h4 id="Source0-和-Source1"><a href="#Source0-和-Source1" class="headerlink" title="Source0 和 Source1"></a>Source0 和 Source1</h4><p><strong>CFRunLoopSourceRef</strong>有两个版本：Source0和Source1，Source的作用是给线程发送异步事件。其中Source0是接收App内部的事件，比如用户点击滑动等事件，App自己负责处理，需要手动来唤醒Runloop，来处理这个事件；Source1是通过内核和其他线程发送消息用的，可以自动唤醒Runloop的线程。</p>
+<h4 id="CFRunLoopTimerRef"><a href="#CFRunLoopTimerRef" class="headerlink" title="CFRunLoopTimerRef"></a>CFRunLoopTimerRef</h4><p>顾名思义，<strong>CFRunLoopTimerRef</strong>是基于时间来出发的，和NSTimer底层一样。当其加入到Runloop时，Runloop会注册对应的时间点，当时间点到时，Runloop会唤醒执行那个回调。常见的使用场景比如：延迟执行某个方法、CADisplayLink的使用等等。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">- (void)performSelector:(SEL)aSelector withObject:(id)anArgument afterDelay:(NSTimeInterval)delay;</div><div class="line"></div><div class="line">+ (CADisplayLink *)displayLinkWithTarget:(id)target selector:(SEL)sel;</div></pre></td></tr></table></figure>
+<h4 id="CFRunLoopObserverRef"><a href="#CFRunLoopObserverRef" class="headerlink" title="CFRunLoopObserverRef"></a>CFRunLoopObserverRef</h4><p><strong>CFRunLoopObserverRef</strong>是基于观察者模式，和<code>CFRunLoopTimerRef</code>类似，每个Observer都会包含有一个回调，用于监听Runloop的状态变化。可以监听到的状态变化有如下几个：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">typedef CF_OPTIONS(CFOptionFlags, CFRunLoopActivity) &#123;</div><div class="line">    kCFRunLoopEntry         = (1UL &lt;&lt; 0), // 即将进入Loop</div><div class="line">    kCFRunLoopBeforeTimers  = (1UL &lt;&lt; 1), // 即将处理 Timer</div><div class="line">    kCFRunLoopBeforeSources = (1UL &lt;&lt; 2), // 即将处理 Source</div><div class="line">    kCFRunLoopBeforeWaiting = (1UL &lt;&lt; 5), // 即将进入休眠</div><div class="line">    kCFRunLoopAfterWaiting  = (1UL &lt;&lt; 6), // 刚从休眠中唤醒</div><div class="line">    kCFRunLoopExit          = (1UL &lt;&lt; 7), // 即将退出Loop</div><div class="line">&#125;;</div></pre></td></tr></table></figure>
+<p>上面所介绍的Source、Timer和Observer都可以添加到多个Model当中，但是如果在一个Mode当中添加多个，是不会起效果的，有一种特殊情况，就是当一个Mode里什么都没有，则这个Runloop就会直接退出。</p>
+<h3 id="Runloop-Mode"><a href="#Runloop-Mode" class="headerlink" title="Runloop Mode"></a>Runloop Mode</h3><p>上面已经说过，Runloop的运行是基于特定的Mode，其数据结构如下所示：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div></pre></td><td class="code"><pre><div class="line">struct __CFRunLoopMode &#123;</div><div class="line">    CFStringRef _name;            // Mode Name, 例如 @&quot;kCFRunLoopDefaultMode&quot;</div><div class="line">    CFMutableSetRef _sources0;    // Set</div><div class="line">    CFMutableSetRef _sources1;    // Set</div><div class="line">    CFMutableArrayRef _observers; // Array</div><div class="line">    CFMutableArrayRef _timers;    // Array</div><div class="line">    ...</div><div class="line">&#125;;</div><div class="line"></div><div class="line">struct __CFRunLoop &#123;</div><div class="line">    CFMutableSetRef _commonModes;     // Set</div><div class="line">    CFMutableSetRef _commonModeItems; // Set&lt;Source/Observer/Timer&gt;</div><div class="line">    CFRunLoopModeRef _currentMode;    // Current Runloop Mode</div><div class="line">    CFMutableSetRef _modes;           // Set</div><div class="line">    ...</div><div class="line">&#125;;</div></pre></td></tr></table></figure>
+<p>这里需要注意一下，有一个很关键的属性叫<code>CommonModes</code>，每当 RunLoop 的内容发生变化时，RunLoop 都会自动将 _commonModeItems 里的 Source/Observer/Timer 同步到具有 “Common” 标记的所有Mode里。</p>
+<p>在iOS系统中包含了两个Mode，一个是<code>NSDefaultRunLoopMode</code>和<code>UITrackingRunLoopMode</code>。这两个Mode都已经被注册成了CommonMode，一般App主线程的Runloop默认是<code>NSDefaultRunLoopMode</code>，当UIScrollView滑动的时候，Runloop就会退出，然后切换到<code>UITrackingRunLoopMode</code>。这两个是苹果公开的Mode，当然，还有一些私有Mode，就在这里不阐述了，有兴趣的读者可以Google一下。</p>
+<p>出了上面这些，苹果还提供一个操作<code>CommonModes</code>的字符串，可以对所有CommonMode进行操作，叫做<code>kCFRunLoopCommonModes</code>，有些同学容易将这个东西和上面的Mode混淆，其实概念还是不一样的，<code>kCFRunLoopCommonModes</code>并不是一个新的Mode，在App主线程的Runloop中，是一个<code>CommonModes</code>组合，包含<code>NSDefaultRunLoopMode</code>和<code>UITrackingRunLoopMode</code>两种Mode。这里的话在下面NSTimer的应用场景中详细讲下。</p>
+<h3 id="Runloop常见应用场景"><a href="#Runloop常见应用场景" class="headerlink" title="Runloop常见应用场景"></a>Runloop常见应用场景</h3><h4 id="AutoreleasePool"><a href="#AutoreleasePool" class="headerlink" title="AutoreleasePool"></a>AutoreleasePool</h4><p>AutoreleasePool其实和Runloop是有关系的，有一个经典的面试题是问<code>AutoreleasePool对象是什么时候释放的？</code>，什么答案都有，标准答案应该是AutoreleasePool对象应该是在当前Runloop迭代结束之后释放的。</p>
+<p>当App启动之后，iOS会在主线程注册两个Observer，第一个Observer是监听即将进入Runloop的状态，监听到后，来创建AutoreleasePool对象，其优先级也是最高的，要保证创建AutoreleasePool发生在其他所有回调之前；第二个Observer是监听Runloop准备休眠状态，来释放旧的AutoreleasePool对象，并且创建新的AutoreleasePool对象以供使用，另外还需要监听即将退出Runloop的状态，优先级是最低的，以此来保证释放操作在其他所有回调之后。</p>
+<p>所以，如果以后有人再问你<code>AutoreleasePool对象是什么时候释放的？</code>，一定要说这和Runloop有关系，当Runloop准备休眠的时候，会释放旧的AutoreleasePool对象，创建新的AutoreleasePool对象，当Runloop即将退出的时候，会释放掉相关所有的AutoreleasePool对象。</p>
+<h4 id="NSTimer"><a href="#NSTimer" class="headerlink" title="NSTimer"></a>NSTimer</h4><p>NSTimer在时间点的触发，是基于Runloop运行的，使用NSTimer之前，都需要将其注册到Runloop上。其实NSTimer就是CFRunLoopTimerRef，一个NSTimer注册好之后，Runloop会自动在时间节点注册好事件。但是Runloop为了节省资源，并不会在非常准确的时间节点调用定时器。为此，NSTimer专门提供了一个tolerance属性，来设置宽容度，标记当时间节点到来之后，容许有多少误差可以触发回调。如果错过了某个时间节点，就只能等下一个时间节点的到来。</p>
+<p>回到之前Mode的话题，当UISCrollView进行滚动的时候，NSTimer就无法正常工作，停止滑动又回恢复正常。这个原因是，添加到Runloop的NSTimer默认是以<code>NSDefaultRunLoopMode</code>模式在工作，当UIScrollView进行滑动的时候，Runloop会退出，然后切换到<code>UITrackingRunLoopMode</code>模式。由于NSTimer不是在这个模式下运行的，所以不会触发定时任务，无法工作。</p>
+<p>要解决这个问题，我们就需要将NSTimer在<code>NSDefaultRunLoopMode</code>和<code>UITrackingRunLoopMode</code>两个模式下工作，在UIScrollView滑动的时候也可以进行触发定时任务。所以，我们需要使用到<code>kCFRunLoopCommonModes</code>来完成任务。一般使用如下语句：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">[[NSRunLoop currentRunLoop] addTimer:timer forMode:NSRunLoopCommonModes];</div></pre></td></tr></table></figure>
+<h4 id="事件响应和手势识别"><a href="#事件响应和手势识别" class="headerlink" title="事件响应和手势识别"></a>事件响应和手势识别</h4><p>事件响应其实和Runloop也是有关系的，为此，苹果专门注册了一个Source1用来接收系统事件。当手机的硬件发生感应，比如触摸、锁屏和摇晃，苹果注册的这个Source1都会收到回调，然后会将事件进行应用内部分发。</p>
+<p>然后，App内主线程的Runloop会触发Source0事件，Source0收到回调进行下一步操作。</p>
+<p>不同于事件响应，对于手势识别，收到苹果Source1对应用内部分发事件后，首先先将所有的手势回调打断，将所对应的UIGestureRecognizer事件标记为待处理，然后苹果会注册一个Observer来监听Runloop即将进入休眠的状态，然后在Observer回调里执行GestureRecognizer的回调。</p>
+<h4 id="UI更新"><a href="#UI更新" class="headerlink" title="UI更新"></a>UI更新</h4><p>UI更新也和Runloop有关，当在操作UI时，改变了UI的大小、层次等，这个 UIView/CALayer就被标记为待处理，并被提交到一个全局的容器去。</p>
+<p>苹果注册了一个Observer来监听Runloop即将进入休眠和即将退出的状态，然后在其Observer回调里遍历所有待处理的 UIView/CAlayer 以执行实际的绘制和调整，并更新 UI 界面。</p>
+<h4 id="GCD"><a href="#GCD" class="headerlink" title="GCD"></a>GCD</h4><p>GCD底层也和Runloop有关，当调用<code>dispatch_async(dispatch_get_main_queue(), block)</code>时，libDispatch会向主线程的RunLoop发送消息，RunLoop会被唤醒，并从消息中取得这个block，并在回调里执行这个block。但这个逻辑仅限于 dispatch 到主线程，dispatch 到其他线程仍然是由 libDispatch 处理的。</p>
+<h4 id="PerformSelecter"><a href="#PerformSelecter" class="headerlink" title="PerformSelecter"></a>PerformSelecter</h4><p>PerformSelecter其实是创建了一个Timer，然后添加到当前的线程中。如果当前线程没有Runloop，这个方法则走不通的。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">- (void)performSelector:(SEL)aSelector withObject:(nullable id)anArgument afterDelay:(NSTimeInterval)delay inModes:(NSArray&lt;NSRunLoopMode&gt; *)modes;</div><div class="line">- (void)performSelector:(SEL)aSelector withObject:(nullable id)anArgument afterDelay:(NSTimeInterval)delay;</div></pre></td></tr></table></figure>
+<p>另外，还有AFNetworking2.0、NSURLConnection的使用其实都和Runloop有关，AFNetworking2.0希望能在后台线程接收到Delegate回调，单独创建了一条线程，并在这条这个线程中启动了Runloop。但是AFNetworking换成基于<code>NSURLSession</code>之后，并没有看到相关Runloop代码。</p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>有关Runloop的东西其实还有很多，这里只是站在大神的肩膀上，总结下基本的Runloop知识，希望能帮到需要的同学！</p>
+<h3 id="引用"><a href="#引用" class="headerlink" title="引用"></a>引用</h3><ul>
+<li><p><a href="http://blog.ibireme.com/2015/05/18/runloop/" target="_blank" rel="external">深入理解RunLoop</a></p>
+</li>
+<li><p><a href="http://opensource.apple.com/tarballs/CF/" target="_blank" rel="external">http://opensource.apple.com/tarballs/CF/</a></p>
+</li>
+</ul>
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;blockquote&gt;
+&lt;p&gt;小结第二篇，来总结下Runloop的知识。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h3 id=&quot;Runloop概述&quot;&gt;&lt;a href=&quot;#Runloop概述&quot; class=&quot;headerlink&quot; title=&quot;Runloop概述&quot;&gt;&lt;/a&gt;Runloop概述&lt;/h3&gt;&lt;p&gt;学过操作系统的同学都知道，一般来说，一条线程只能执行一个任务，当任务结束后，线程就会退出，完成使命。但是，在很多场景中，我们并不想让线程执行完任务就退出，往往，我们需要其保持随时随地听从命令，可以在需要的时候执行任务，不需要的时候处于等待状态。&lt;/p&gt;
+&lt;figure class=&quot;highlight plain&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;div class=&quot;line&quot;&gt;1&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;2&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;3&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;4&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;5&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;6&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;7&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;8&lt;/div&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;div class=&quot;line&quot;&gt;function loop() &amp;#123;&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;    initLoop();&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;    do &amp;#123;&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;        if(message_hasTask()) &amp;#123;&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;            message_execute(get_current_message());&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;        &amp;#125;&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;    &amp;#125; while (message != quit);&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;&amp;#125;&lt;/div&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
+&lt;p&gt;比如，在手游上，我们需要一个模型来一直监听用户的触摸事件，来对游戏画面进行切换和逻辑判断。这种模型一般都具有相似性。比如：当模型被事件唤醒之后，如何快速地进行响应；当模型处于等待状态时，如何减少资源耗用等等。&lt;/p&gt;
+&lt;p&gt;这种模型，在iOS中称作Runloop。Runloop所解决的问题，就是实现一个线程，使得可以随时响应用户的事件，而不退出。&lt;/p&gt;
+    
+    </summary>
+    
+    
+      <category term="iOS" scheme="http://yoursite.com/tags/iOS/"/>
+    
+  </entry>
+  
+  <entry>
     <title>iOS小结之copy属性</title>
     <link href="http://yoursite.com/2017/06/05/iOS%E5%B0%8F%E7%BB%93%E4%B9%8Bcopy%E5%B1%9E%E6%80%A7/"/>
     <id>http://yoursite.com/2017/06/05/iOS小结之copy属性/</id>
     <published>2017-06-05T10:21:19.000Z</published>
-    <updated>2017-06-05T10:23:19.000Z</updated>
+    <updated>2017-06-11T07:38:25.000Z</updated>
     
     <content type="html"><![CDATA[<blockquote>
 <p>一直都想去写个系列出来，总结出自己在日常开发中遇到过的知识点，时不时的回头看看，温故而知新。</p>
 </blockquote>
 <p>小结第一篇，来总结一下iOS开发中有关copy的知识点。</p>
-<a id="more"></a>
 <h3 id="iOS中，深拷贝和浅拷贝有什么不同？"><a href="#iOS中，深拷贝和浅拷贝有什么不同？" class="headerlink" title="iOS中，深拷贝和浅拷贝有什么不同？"></a>iOS中，深拷贝和浅拷贝有什么不同？</h3><h4 id="浅拷贝"><a href="#浅拷贝" class="headerlink" title="浅拷贝"></a>浅拷贝</h4><p>所谓的浅拷贝，就是指只是将对象内存地址多了一个引用，也就是说，拷贝结束之后，两个对象的值不仅相同，而且对象所指的内存地址都是一样的。</p>
 <h4 id="深拷贝"><a href="#深拷贝" class="headerlink" title="深拷贝"></a>深拷贝</h4><p>所谓深拷贝，就是指拷贝一个对象的具体内容，拷贝结束之后，两个对象的值虽然是相同的，但是指向的内存地址是不同的。两个对象之间也互不影响，互不干扰。</p>
 <h4 id="非集合类对象的copy和mutableCopy"><a href="#非集合类对象的copy和mutableCopy" class="headerlink" title="非集合类对象的copy和mutableCopy"></a>非集合类对象的copy和mutableCopy</h4><p>我们对一个NSString属性进行copy和mutableCopy。</p>
@@ -34,6 +118,7 @@
 <p>运行之后，可以发现：</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">string: 0x1022fe078, 0x7fff5d901a48</div><div class="line">stringCopy: 0x1022fe078, 0x7fff5d901a40</div><div class="line">stringMCopy: 0x608000260240, 0x7fff5d901a38</div></pre></td></tr></table></figure>
 <p>可以看出，对NSString进行copy操作，其新对象的内存地址并没有发生变化，改变的只仅仅是指针的地址，但是进行mutableCopy操作，其内存地址已经发生了变化，并且指针地址发生变化。我们将内存地址发生了变化的copy操作，称之为深拷贝，反之，内存地址没有发生了变化，称之为浅拷贝。</p>
+<a id="more"></a>
 <p>接下来，我们对NSMutableString进行copy和mutableCopy.</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">NSMutableString *string = [NSMutableString stringWithFormat:@&quot;abc&quot;];</div><div class="line">NSString *stringCopy = [string copy];</div><div class="line">NSMutableString *stringMCopy = [string mutableCopy];</div><div class="line"></div><div class="line">NSLog(@&quot;string: %p, %p&quot;, string, &amp;string);</div><div class="line">NSLog(@&quot;stringCopy: %p, %p&quot;, stringCopy, &amp;stringCopy);</div><div class="line">NSLog(@&quot;stringMCopy: %p, %p&quot;, stringMCopy, &amp;stringMCopy);</div></pre></td></tr></table></figure>
 <p>运行之后，我们可以发现：</p>
@@ -87,6 +172,13 @@
 &lt;p&gt;一直都想去写个系列出来，总结出自己在日常开发中遇到过的知识点，时不时的回头看看，温故而知新。&lt;/p&gt;
 &lt;/blockquote&gt;
 &lt;p&gt;小结第一篇，来总结一下iOS开发中有关copy的知识点。&lt;/p&gt;
+&lt;h3 id=&quot;iOS中，深拷贝和浅拷贝有什么不同？&quot;&gt;&lt;a href=&quot;#iOS中，深拷贝和浅拷贝有什么不同？&quot; class=&quot;headerlink&quot; title=&quot;iOS中，深拷贝和浅拷贝有什么不同？&quot;&gt;&lt;/a&gt;iOS中，深拷贝和浅拷贝有什么不同？&lt;/h3&gt;&lt;h4 id=&quot;浅拷贝&quot;&gt;&lt;a href=&quot;#浅拷贝&quot; class=&quot;headerlink&quot; title=&quot;浅拷贝&quot;&gt;&lt;/a&gt;浅拷贝&lt;/h4&gt;&lt;p&gt;所谓的浅拷贝，就是指只是将对象内存地址多了一个引用，也就是说，拷贝结束之后，两个对象的值不仅相同，而且对象所指的内存地址都是一样的。&lt;/p&gt;
+&lt;h4 id=&quot;深拷贝&quot;&gt;&lt;a href=&quot;#深拷贝&quot; class=&quot;headerlink&quot; title=&quot;深拷贝&quot;&gt;&lt;/a&gt;深拷贝&lt;/h4&gt;&lt;p&gt;所谓深拷贝，就是指拷贝一个对象的具体内容，拷贝结束之后，两个对象的值虽然是相同的，但是指向的内存地址是不同的。两个对象之间也互不影响，互不干扰。&lt;/p&gt;
+&lt;h4 id=&quot;非集合类对象的copy和mutableCopy&quot;&gt;&lt;a href=&quot;#非集合类对象的copy和mutableCopy&quot; class=&quot;headerlink&quot; title=&quot;非集合类对象的copy和mutableCopy&quot;&gt;&lt;/a&gt;非集合类对象的copy和mutableCopy&lt;/h4&gt;&lt;p&gt;我们对一个NSString属性进行copy和mutableCopy。&lt;/p&gt;
+&lt;figure class=&quot;highlight plain&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;div class=&quot;line&quot;&gt;1&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;2&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;3&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;4&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;5&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;6&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;7&lt;/div&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;div class=&quot;line&quot;&gt;NSString *string = @&amp;quot;abc&amp;quot;;&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;NSString *stringCopy = [string copy];&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;NSMutableString *stringMCopy = [string mutableCopy];&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;NSLog(@&amp;quot;string: %p, %p&amp;quot;, string, &amp;amp;string);&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;NSLog(@&amp;quot;stringCopy: %p, %p&amp;quot;, stringCopy, &amp;amp;stringCopy);&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;NSLog(@&amp;quot;stringMCopy: %p, %p&amp;quot;, stringMCopy, &amp;amp;stringMCopy);&lt;/div&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
+&lt;p&gt;运行之后，可以发现：&lt;/p&gt;
+&lt;figure class=&quot;highlight plain&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;div class=&quot;line&quot;&gt;1&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;2&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;3&lt;/div&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;div class=&quot;line&quot;&gt;string: 0x1022fe078, 0x7fff5d901a48&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;stringCopy: 0x1022fe078, 0x7fff5d901a40&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;stringMCopy: 0x608000260240, 0x7fff5d901a38&lt;/div&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
+&lt;p&gt;可以看出，对NSString进行copy操作，其新对象的内存地址并没有发生变化，改变的只仅仅是指针的地址，但是进行mutableCopy操作，其内存地址已经发生了变化，并且指针地址发生变化。我们将内存地址发生了变化的copy操作，称之为深拷贝，反之，内存地址没有发生了变化，称之为浅拷贝。&lt;/p&gt;
     
     </summary>
     
@@ -100,12 +192,12 @@
     <link href="http://yoursite.com/2017/04/20/iOS%E4%B8%AD%E9%81%8D%E5%8E%86%E7%9A%84%E6%80%BB%E7%BB%93/"/>
     <id>http://yoursite.com/2017/04/20/iOS中遍历的总结/</id>
     <published>2017-04-20T13:15:11.000Z</published>
-    <updated>2017-04-26T13:26:31.000Z</updated>
+    <updated>2017-06-11T07:38:29.000Z</updated>
     
     <content type="html"><![CDATA[<h3 id="遍历的种类"><a href="#遍历的种类" class="headerlink" title="遍历的种类"></a>遍历的种类</h3><p>在iOS开发中，可以使用多种方法进行元素遍历，具体有一下几种：</p>
-<a id="more"></a>
 <h4 id="经典for循环"><a href="#经典for循环" class="headerlink" title="经典for循环"></a>经典for循环</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">NSArray *iosArray = @[@&quot;a&quot;, @&quot;b&quot;, @&quot;c&quot;, @&quot;d&quot;, @&quot;e&quot;, @&quot;f&quot;, @&quot;g&quot;];</div><div class="line">for (int i = 0; i &lt; iosArray.count; i++) &#123;</div><div class="line">    //处理数组中数据</div><div class="line">    NSLog(@&quot;%@&quot;, iosArray[i]);</div><div class="line">&#125;</div></pre></td></tr></table></figure>
 <h4 id="NSEnumerator遍历"><a href="#NSEnumerator遍历" class="headerlink" title="NSEnumerator遍历"></a>NSEnumerator遍历</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line">NSArray *iosArray = @[@&quot;a&quot;, @&quot;b&quot;, @&quot;c&quot;, @&quot;d&quot;, @&quot;e&quot;, @&quot;f&quot;, @&quot;g&quot;];</div><div class="line">NSEnumerator *enumerator = [iosArray objectEnumerator];//正向遍历</div><div class="line">// NSEnumerator *enumerator = [iosArray reverseObjectEnumerator];//反向遍历</div><div class="line"></div><div class="line">id object;</div><div class="line"></div><div class="line">while ((object = [enumerator nextObject]) != nil) &#123;</div><div class="line">    //处理枚举器中的数据</div><div class="line">    NSLog(@&quot;%@&quot;, object);</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<a id="more"></a>
 <h4 id="for-in快速遍历"><a href="#for-in快速遍历" class="headerlink" title="for-in快速遍历"></a>for-in快速遍历</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">NSArray *iosArray = @[@&quot;a&quot;, @&quot;b&quot;, @&quot;c&quot;, @&quot;d&quot;, @&quot;e&quot;, @&quot;f&quot;, @&quot;g&quot;];</div><div class="line">for (NSString *obj in iosArray) &#123;</div><div class="line">    //处理数组中的数据</div><div class="line">    NSLog(@&quot;%@&quot;, obj);</div><div class="line">&#125;</div></pre></td></tr></table></figure>
 <h4 id="EnumeratorBlock遍历"><a href="#EnumeratorBlock遍历" class="headerlink" title="EnumeratorBlock遍历"></a>EnumeratorBlock遍历</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">NSArray *iosArray = @[@&quot;a&quot;, @&quot;b&quot;, @&quot;c&quot;, @&quot;d&quot;, @&quot;e&quot;, @&quot;f&quot;, @&quot;g&quot;];</div><div class="line">[iosArray enumerateObjectsUsingBlock:^(id  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) &#123;</div><div class="line">    NSLog(@&quot;%@&quot;, obj);</div><div class="line">    if ([obj isEqualToString:@&quot;e&quot;]) &#123;</div><div class="line">        *stop = YES;    // 跳出遍历</div><div class="line">    &#125;</div><div class="line">&#125;];</div></pre></td></tr></table></figure>
 <p>另外，EnumeratorBlock还支持反向遍历，并发遍历，并发遍历可以使用多核的优化，充分利用系统的资源。</p>
@@ -129,6 +221,8 @@
     <summary type="html">
     
       &lt;h3 id=&quot;遍历的种类&quot;&gt;&lt;a href=&quot;#遍历的种类&quot; class=&quot;headerlink&quot; title=&quot;遍历的种类&quot;&gt;&lt;/a&gt;遍历的种类&lt;/h3&gt;&lt;p&gt;在iOS开发中，可以使用多种方法进行元素遍历，具体有一下几种：&lt;/p&gt;
+&lt;h4 id=&quot;经典for循环&quot;&gt;&lt;a href=&quot;#经典for循环&quot; class=&quot;headerlink&quot; title=&quot;经典for循环&quot;&gt;&lt;/a&gt;经典for循环&lt;/h4&gt;&lt;figure class=&quot;highlight plain&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;div class=&quot;line&quot;&gt;1&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;2&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;3&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;4&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;5&lt;/div&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;div class=&quot;line&quot;&gt;NSArray *iosArray = @[@&amp;quot;a&amp;quot;, @&amp;quot;b&amp;quot;, @&amp;quot;c&amp;quot;, @&amp;quot;d&amp;quot;, @&amp;quot;e&amp;quot;, @&amp;quot;f&amp;quot;, @&amp;quot;g&amp;quot;];&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;for (int i = 0; i &amp;lt; iosArray.count; i++) &amp;#123;&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;    //处理数组中数据&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;    NSLog(@&amp;quot;%@&amp;quot;, iosArray[i]);&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;&amp;#125;&lt;/div&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
+&lt;h4 id=&quot;NSEnumerator遍历&quot;&gt;&lt;a href=&quot;#NSEnumerator遍历&quot; class=&quot;headerlink&quot; title=&quot;NSEnumerator遍历&quot;&gt;&lt;/a&gt;NSEnumerator遍历&lt;/h4&gt;&lt;figure class=&quot;highlight plain&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;div class=&quot;line&quot;&gt;1&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;2&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;3&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;4&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;5&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;6&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;7&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;8&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;9&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;10&lt;/div&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;div class=&quot;line&quot;&gt;NSArray *iosArray = @[@&amp;quot;a&amp;quot;, @&amp;quot;b&amp;quot;, @&amp;quot;c&amp;quot;, @&amp;quot;d&amp;quot;, @&amp;quot;e&amp;quot;, @&amp;quot;f&amp;quot;, @&amp;quot;g&amp;quot;];&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;NSEnumerator *enumerator = [iosArray objectEnumerator];//正向遍历&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;// NSEnumerator *enumerator = [iosArray reverseObjectEnumerator];//反向遍历&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;id object;&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;while ((object = [enumerator nextObject]) != nil) &amp;#123;&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;    //处理枚举器中的数据&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;    NSLog(@&amp;quot;%@&amp;quot;, object);&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;&amp;#125;&lt;/div&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
     
     </summary>
     
@@ -142,10 +236,9 @@
     <link href="http://yoursite.com/2017/04/02/MQTT%E5%8D%8F%E8%AE%AE%E5%8F%8A%E6%8E%A8%E9%80%81%E6%9C%8D%E5%8A%A1/"/>
     <id>http://yoursite.com/2017/04/02/MQTT协议及推送服务/</id>
     <published>2017-04-02T13:31:07.000Z</published>
-    <updated>2017-04-24T13:49:00.000Z</updated>
+    <updated>2017-06-11T07:38:32.000Z</updated>
     
     <content type="html"><![CDATA[<h3 id="MQTT简介"><a href="#MQTT简介" class="headerlink" title="MQTT简介"></a>MQTT简介</h3><p>MQTT全称叫做Message Queuing Telemetry Transport，意为消息队列遥测传输，是IBM开发的一个即时通讯协议。由于其维护一个长连接以轻量级低消耗著称，所以常用于移动端消息推送服务开发。</p>
-<a id="more"></a>
 <h4 id="MQTT特性"><a href="#MQTT特性" class="headerlink" title="MQTT特性"></a>MQTT特性</h4><p>MQTT具有如下特性：</p>
 <ul>
 <li>使用发布／订阅消息模式，提供一对多消息发布；</li>
@@ -166,6 +259,7 @@
 <li><p>通知有关各方客户端异常中断的机制。</p>
 </li>
 </ul>
+<a id="more"></a>
 <h4 id="MQTT协议实现方式"><a href="#MQTT协议实现方式" class="headerlink" title="MQTT协议实现方式"></a>MQTT协议实现方式</h4><p><img src="https://itbilu.com/upload/2016/1/9/14523188625918865.png" alt="image"></p>
 <p>在MQTT协议中有三种身份：</p>
 <ul>
@@ -229,6 +323,26 @@
     <summary type="html">
     
       &lt;h3 id=&quot;MQTT简介&quot;&gt;&lt;a href=&quot;#MQTT简介&quot; class=&quot;headerlink&quot; title=&quot;MQTT简介&quot;&gt;&lt;/a&gt;MQTT简介&lt;/h3&gt;&lt;p&gt;MQTT全称叫做Message Queuing Telemetry Transport，意为消息队列遥测传输，是IBM开发的一个即时通讯协议。由于其维护一个长连接以轻量级低消耗著称，所以常用于移动端消息推送服务开发。&lt;/p&gt;
+&lt;h4 id=&quot;MQTT特性&quot;&gt;&lt;a href=&quot;#MQTT特性&quot; class=&quot;headerlink&quot; title=&quot;MQTT特性&quot;&gt;&lt;/a&gt;MQTT特性&lt;/h4&gt;&lt;p&gt;MQTT具有如下特性：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;使用发布／订阅消息模式，提供一对多消息发布；&lt;/li&gt;
+&lt;li&gt;对负载内容屏蔽的消息传输；&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;使用TCP/IP进行网络连接；&lt;/p&gt;
+&lt;p&gt;  主流的MQTT是基于TCP进行连接的，同样也有UDP版本的MQTT，但是不太常用，叫做MQTT-SN。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;具有三种消息发布服务质量选项；&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;“至多一次”，通常app的推送使用的就是这种模式。也就是说，如果移动设备在消息推送的时候没有联网，那么再次联网就不会收到通知了；&lt;/li&gt;
+&lt;li&gt;“至少一次”，可以确保消息收到，但消息可能会重复；&lt;/li&gt;
+&lt;li&gt;“只有一次”，确保消息到达一次，比如计费系统， 如果出现消息重复或者丢失会导致系统结果不正确的问题。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;小型传输，开销很小（固定长度的头部是2字节），协议交换最小化，以降低网络流量；&lt;/p&gt;
+&lt;p&gt;  这就是为什么MQTT能以轻量级低消耗著称，所以MQTT特别适用于低开销、低宽带占用的即时通讯场景。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;通知有关各方客户端异常中断的机制。&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
     
     </summary>
     
@@ -242,15 +356,15 @@
     <link href="http://yoursite.com/2017/02/20/%E6%9C%89%E5%85%B3Keychain%E6%9C%8D%E5%8A%A1%EF%BC%8C%E4%BD%A0%E9%9C%80%E8%A6%81%E4%BA%86%E8%A7%A3%E8%BF%99%E4%BA%9B/"/>
     <id>http://yoursite.com/2017/02/20/有关Keychain服务，你需要了解这些/</id>
     <published>2017-02-20T06:15:44.000Z</published>
-    <updated>2017-03-12T15:05:13.000Z</updated>
+    <updated>2017-06-11T07:38:22.000Z</updated>
     
     <content type="html"><![CDATA[<blockquote>
 <p>在iOS系统中，Keychain提供了安全的存储服务，用来存储一些敏感信息。但是在日常开发中，我们经常会忽视这个苹果自荐的功能，本文的目的就是引起开发者的重视，敏感信息尽量使用Keychain服务。</p>
 </blockquote>
-<a id="more"></a>
 <h3 id="NSUserDefaults不安全"><a href="#NSUserDefaults不安全" class="headerlink" title="NSUserDefaults不安全"></a>NSUserDefaults不安全</h3><p>NSUserDefaults其实是plist文件中键值存储，并且最大的问题是存在与沙盒中，这就对安全性埋下了隐患。如果攻击者破解app，拿到了沙盒中的数据，就会造成数据泄漏，后果不堪设想。</p>
 <p>当然，一般也不会有把密码直接使用NSUserDefaults存储的，都会进行加密、或者是多重加密后再进行NSUserDefaults存储。这么做其实是可行的，前提是加密算法不能泄漏。有个小问题就是，如果用户删掉app重装的话，之前所有存储的敏感信息都会消失。比如，一个用户误删了使用NSUserDefaults存储密码的app，当重新安装之后，由于以前是记住密码免登录，只因为自己操作不当，接下来要进入找回密码功能，重新修改密码才能再次使用app。这对用户来说是一种相当不友好的体验。</p>
 <p>所以，正确的姿势是使用Keychain服务来存储。Keychain保存的数据不仅仅是加密过的，而且由于Keychain是存在与沙盒之外的，当应用删除之后，app存储的数据并没有被删掉，第二次安装时只要读取Keychain里的数据，即可得到以前存储的信息。</p>
+<a id="more"></a>
 <h3 id="Keychain使用场景"><a href="#Keychain使用场景" class="headerlink" title="Keychain使用场景"></a>Keychain使用场景</h3><h4 id="存储隐私信息"><a href="#存储隐私信息" class="headerlink" title="存储隐私信息"></a>存储隐私信息</h4><p>在iOS系统中，最常用的keychain服务就是存储用户密码了。使用keychain保存用户密码最大的好处已经在上面说过，个人极力推荐这么做。</p>
 <h4 id="数据共享"><a href="#数据共享" class="headerlink" title="数据共享"></a>数据共享</h4><p>如果我们有多个app，它们之间需要共享一些数据，以提供更好的用户体验，那么使用Keychain群组可以实现。但前提是同一个公司的产品才能共享，比如<code>com.hyyy.test1</code>和<code>com.hyyy.test2</code>两个同一公司下的不同产品之前可以实现数据共享。</p>
 <h4 id="设备唯一标示存储"><a href="#设备唯一标示存储" class="headerlink" title="设备唯一标示存储"></a>设备唯一标示存储</h4><p>在iOS中，为了在苹果的打压下获取唯一标示符，开发者们也是想尽了办法，目前最好的方式就是获取IDFV，并将其存储到keychain中。IDFV是设备区别应用提供商的，一般来说可以作为应用唯一标示符。但是IDFV缺陷就是当设备删除了该所有应用提供商的app之后，IDFV值会发生变化，所以IDFV+Keychain的组合目前被经常用到，来替代UDID的作用。特别是加上Keychain的共享服务，可以使应用提供商下的所有app下获取的IDFV都不会发生变化。这一服务可以说是目前最佳的识别用户的办法。</p>
@@ -269,6 +383,9 @@
       &lt;blockquote&gt;
 &lt;p&gt;在iOS系统中，Keychain提供了安全的存储服务，用来存储一些敏感信息。但是在日常开发中，我们经常会忽视这个苹果自荐的功能，本文的目的就是引起开发者的重视，敏感信息尽量使用Keychain服务。&lt;/p&gt;
 &lt;/blockquote&gt;
+&lt;h3 id=&quot;NSUserDefaults不安全&quot;&gt;&lt;a href=&quot;#NSUserDefaults不安全&quot; class=&quot;headerlink&quot; title=&quot;NSUserDefaults不安全&quot;&gt;&lt;/a&gt;NSUserDefaults不安全&lt;/h3&gt;&lt;p&gt;NSUserDefaults其实是plist文件中键值存储，并且最大的问题是存在与沙盒中，这就对安全性埋下了隐患。如果攻击者破解app，拿到了沙盒中的数据，就会造成数据泄漏，后果不堪设想。&lt;/p&gt;
+&lt;p&gt;当然，一般也不会有把密码直接使用NSUserDefaults存储的，都会进行加密、或者是多重加密后再进行NSUserDefaults存储。这么做其实是可行的，前提是加密算法不能泄漏。有个小问题就是，如果用户删掉app重装的话，之前所有存储的敏感信息都会消失。比如，一个用户误删了使用NSUserDefaults存储密码的app，当重新安装之后，由于以前是记住密码免登录，只因为自己操作不当，接下来要进入找回密码功能，重新修改密码才能再次使用app。这对用户来说是一种相当不友好的体验。&lt;/p&gt;
+&lt;p&gt;所以，正确的姿势是使用Keychain服务来存储。Keychain保存的数据不仅仅是加密过的，而且由于Keychain是存在与沙盒之外的，当应用删除之后，app存储的数据并没有被删掉，第二次安装时只要读取Keychain里的数据，即可得到以前存储的信息。&lt;/p&gt;
     
     </summary>
     
