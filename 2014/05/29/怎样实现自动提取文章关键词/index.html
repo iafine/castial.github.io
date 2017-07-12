@@ -1,0 +1,31 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="X-UA-Compatible" content="IE=edge"><title> 怎样实现自动提取文章关键词 · Hyyy的技术博客</title><meta name="description" content="怎样实现自动提取文章关键词 - Hyyy"><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="icon" href="/favicon.png"><link rel="stylesheet" href="/css/apollo.css"><link rel="search" type="application/opensearchdescription+xml" href="http://yoursite.com/atom.xml" title="Hyyy的技术博客"></head><body><div class="wrap"><header><a href="/" class="logo-link"><img src="/favicon.png" alt="logo"></a><ul class="nav nav-list"><li class="nav-list-item"><a href="/" target="_self" class="nav-list-link">博客</a></li><li class="nav-list-item"><a href="/archives/" target="_self" class="nav-list-link">归档</a></li><li class="nav-list-item"><a href="http://www.jianshu.com/u/eee3fae14bec" target="_blank" class="nav-list-link">简书</a></li><li class="nav-list-item"><a href="https://github.com/castial" target="_blank" class="nav-list-link">GITHUB</a></li><li class="nav-list-item"><a href="/atom.xml" target="_self" class="nav-list-link">RSS</a></li></ul></header><main class="container"><div class="post"><article class="post-block"><h1 class="post-title">怎样实现自动提取文章关键词</h1><div class="post-info">May 29, 2014</div><div class="post-content"><blockquote>
+<p>有些时候，一个功能听起来好像很难实现，但是做起来其实很简单。  </p>
+</blockquote>
+<p>想一想，自动提取一片文章或者资料的关键词这个功能真的好厉害。实现这个应该涉及到文本分析，信息检索等多方面知识。但是，数学之美这本书告诉我们，其实运用简单的数学知识，就可以实现它。  </p>
+<p>关键是我们应该怎么实现它呢？  </p>
+<p>我们先假设一下，当我们拿到一篇文章后，它的关键词一般会有什么特征呢？一般来说，关键词主要是为了区分这篇文章和其他文章有什么不同，让人一眼就知道这篇文章的特点了。有的时候关键词可能是在文章中多次重复提到的那些词语。如果这样的话就很简单了，我们可以遍历整篇文章，根据文章所有词语出现的次数进行排序，排在前几位的那几个应该就是关键词了吧，  </p>
+<p>但是，这样做是不是有点不对劲呀，有可能你碰到排在前几位的是一些无关紧要的词语，比如“的”，“啊”，“什么”等等。完全破坏了预期的效果。别着急，有一个非常好用的统计方法可以实现这一功能。  </p>
+<a id="more"></a>
+<h3 id="TF-IDF技术"><a href="#TF-IDF技术" class="headerlink" title="TF/IDF技术"></a>TF/IDF技术</h3><p>TF／IDF被公认为信息检索中最重要的发明。在搜索、文献分类和其他相关领域都有广泛的应用。  </p>
+<p>通俗来讲，TF／IDF的主要解决办法就是如果某个词在一篇文章中出现的次数较多，而在其他文章中出现的次数比较少，那么这个词就有很好的区分能力，将它作为这篇文章的关键词是非常合适的。  </p>
+<p>其中TF的意思是Term Frequency，即词频，指的是某个给定的词语在该文件中出现的次数。TF的值时term在文档中出现的次数除以该文档中所有term出现的总次数。比如“美食”在一篇文章中出现了10次，这篇文章中一共有100个词语，那么“美食”的TF就是10/100=0.1。  </p>
+<p>IDF英文是Inverse Document Frequency。指的是逆文本频率指数，表达的是一个权重大小问题。试想一下，如果单单用词频统计关键词，然后排除掉不相关的词语，那么得到的一定是这篇文章的关键词吗？答案是不一定的。仅仅这样做，得到的有可能是一些常用的非语气词。对于一篇内容已经固定的文章，显然还需要判断这些关键词在其他文章中是不是常用的，即它们在其他文章中的TF值也很高。所以，就要使用IDF去判断一下。  </p>
+<p>IDF简单来说，就是一个词语在整个文章集中出现的次数越多，那么它的IDF值越小。至于它的公式，可以参考数学之美这本书讲的。它所做的任务就是给词语一个权重，如果是比较常见的词语，那么就给它的权值比较小，如果词语比较少见，那么它的权值就比较高。  </p>
+<p>然后，根据这两个，就可以简单实现功能了。  </p>
+<p>下面给出功能实现的思路：  </p>
+<ol>
+<li>首先给文章进行分词（中文分词） ；</li>
+<li>根据TF／IDF技术，得到关键词；</li>
+<li>针对现实场景，可以加上不同的权重，比如，文章的话，第一段和最后一段或者标题出现的关键词权重加大。  </li>
+</ol>
+<p>对于一个爱好者来说，这样做已经足够了。但是，如果是专业人士的话，TF／IDF还远远不够，TF／IDF只是简单地统计设置权重，体现不出来一个词语的位置信息，而且无法看到关键词在整个文章中的分布情况。如果想进一步学习，还得多看一些这方面的paper。  </p>
+<p>当然，TF／IDF的应用远不止如此。搜索引擎方面，利用它可以实现网页的相关性分析。数学之美这本书指出，如果你可以利用爬虫实现自动下载网页、建立索引，然后使用TF／IDF技术进行网页相关性分析，再加上一个衡量网页质量的PageRank算法，就可以简单地做出一个搜索引擎了，说不定你还可以做出个Google的早期模型呢。</p>
+</div></article></div></main><footer><div class="paginator"><a href="/2014/06/25/SQL语句的总结/" class="prev">PREV</a><a href="/2014/04/04/Linux编译配置LAMP环境/" class="next">NEXT</a></div><div id="disqus_thread"></div><script>var disqus_shortname = 'hyyyblog';
+var disqus_identifier = '2014/05/29/怎样实现自动提取文章关键词/';
+var disqus_title = '怎样实现自动提取文章关键词';
+var disqus_url = 'http://yoursite.com/2014/05/29/怎样实现自动提取文章关键词/';
+(function() {
+    var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+    dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();</script><script id="dsq-count-scr" src="//hyyyblog.disqus.com/count.js" async></script><div class="copyright"><p>© 2015 - 2017 <a href="http://yoursite.com">Hyyy</a>, powered by <a href="https://hexo.io/" target="_blank">Hexo</a> and <a href="https://github.com/pinggod/hexo-theme-apollo" target="_blank">hexo-theme-apollo</a>.</p></div></footer></div><script async src="//cdn.bootcss.com/mathjax/2.7.0/MathJax.js?config=TeX-MML-AM_CHTML" integrity="sha384-crwIf/BuaWM9rM65iM+dWFldgQ1Un8jWZMuh3puxb8TOY9+linwLoI7ZHZT+aekW" crossorigin="anonymous"></script><script>(function(b,o,i,l,e,r){b.GoogleAnalyticsObject=l;b[l]||(b[l]=function(){(b[l].q=b[l].q||[]).push(arguments)});b[l].l=+new Date;e=o.createElement(i);r=o.getElementsByTagName(i)[0];e.src='//www.google-analytics.com/analytics.js';r.parentNode.insertBefore(e,r)}(window,document,'script','ga'));ga('create',"UA-65933410-1",'auto');ga('send','pageview');</script></body></html>

@@ -1,0 +1,39 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="X-UA-Compatible" content="IE=edge"><title> SQL的基本使用 · Hyyy的技术博客</title><meta name="description" content="SQL的基本使用 - Hyyy"><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="icon" href="/favicon.png"><link rel="stylesheet" href="/css/apollo.css"><link rel="search" type="application/opensearchdescription+xml" href="http://yoursite.com/atom.xml" title="Hyyy的技术博客"></head><body><div class="wrap"><header><a href="/" class="logo-link"><img src="/favicon.png" alt="logo"></a><ul class="nav nav-list"><li class="nav-list-item"><a href="/" target="_self" class="nav-list-link">博客</a></li><li class="nav-list-item"><a href="/archives/" target="_self" class="nav-list-link">归档</a></li><li class="nav-list-item"><a href="http://www.jianshu.com/u/eee3fae14bec" target="_blank" class="nav-list-link">简书</a></li><li class="nav-list-item"><a href="https://github.com/castial" target="_blank" class="nav-list-link">GITHUB</a></li><li class="nav-list-item"><a href="/atom.xml" target="_self" class="nav-list-link">RSS</a></li></ul></header><main class="container"><div class="post"><article class="post-block"><h1 class="post-title">SQL的基本使用</h1><div class="post-info">Jun 25, 2014</div><div class="post-content"><blockquote>
+<p>最近在实验室做了将近一个月的数据库工作，做的都有点想吐了，来总结总结吧。</p>
+</blockquote>
+<h3 id="连接查询操作"><a href="#连接查询操作" class="headerlink" title="连接查询操作"></a>连接查询操作</h3><p>连接操作非常方便，它起源于笛卡尔积，笛卡尔积的大概意思就是两个对象所有的有序对的表示。  </p>
+<p>首先我们先看左连接。  </p>
+<p>首先连接操作就是表示出所有的有序对，左连接的操作就是在规定的条件下，以左表为准，去右表找数据，如果没有匹配到结果，就为null。这样做下去的数据数肯定大于等于左表数据数。  </p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">select * from ta left join tb on ta.id = tb.no ;</div></pre></td></tr></table></figure>
+<p>需要注意的是，on后面跟的是连接两张表的字段。  </p>
+<p>右连接和左连接差不多，一个意思，一般推荐使用左连接代替右连接。  </p>
+<p>内连接的结果就是左右连接的交集。在实际使用中，使用内连接可以使用实现去重操作，而且还可以去掉null项，所以在上个月内连接用的还是挺多的。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">select * form ta inner join tb on ta.id = tb.no ;</div></pre></td></tr></table></figure>
+<h3 id="group-by的妙用"><a href="#group-by的妙用" class="headerlink" title="group by的妙用"></a>group by的妙用</h3><p>总所周知，group by是进行分组操作的，但是用好它，可以解决些比较棘手的问题。  </p>
+<p>比如，如何判断多个字段组合起来在表中是不是唯一的，注意，组合不是相加或者连接。如果一个字段的话，只要看它有没有重复值即可。多个字段使用order by去判断效率非常高，以两个字段为例：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">select count(*) from ta group by a1, a2 having count(*)&gt;1 ;</div></pre></td></tr></table></figure>
+<p>如果结果中有大于1的数值，则两个字段组合在这张表中不唯一。  </p>
+<h3 id="防止插入重复数据"><a href="#防止插入重复数据" class="headerlink" title="防止插入重复数据"></a>防止插入重复数据</h3><p>这其实算不上什么新知识，只是有时候会分开写。一般都是先判断要插入的数据在表里面有没有，如果没有，再进行插入操作。下面的一句sql就可以实现上面的功能。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">insert into ta(a1, a2) select 11, 12 from DUAL where not exists (select a1, a2 from ta where a1=11 and a2=12) ;</div></pre></td></tr></table></figure>
+<p>其中使用了dual虚拟表，然后使用嵌套sql来实现判断条件。dual使用的不多，貌似是oracle中的。  </p>
+<a id="more"></a>
+<h3 id="查询主键字段"><a href="#查询主键字段" class="headerlink" title="查询主键字段"></a>查询主键字段</h3><p>当你遇到一个非常混乱的数据表，而且一眼也看不出它的主键是哪个字段时，或者您需要程序实现自动判断多张表的主键时，就需要下面这条语句了。  </p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">select COLUMN_KEY, COLUMN_NAME from INFORMATION_SCHEMA.COLUMNS where table_name = &apos;表名&apos; AND COLUMN_KEY=&apos;PRI&apos; ;</div></pre></td></tr></table></figure>
+<p>其中COLUMN_KEY可以有四种情况。  </p>
+<ol>
+<li>KEY为空的，那么表示该字段可以重复，没有索引；</li>
+<li>KEY是PRI，表示该字段是主键组成部分；</li>
+<li>KEY是NUI，代表unique，该字段唯一，并且没有null值；</li>
+<li>KEY是NUL，代表multi，该字段可以重复，可以有重复值。</li>
+</ol>
+<h3 id="更改存储引擎"><a href="#更改存储引擎" class="headerlink" title="更改存储引擎"></a>更改存储引擎</h3><p>mysql有很多种存储引擎，其中用的最多的是InnoDB和MyISAM这两个。有时候需要数据库实现一些新功能，比如全文检索，但是InnoDB不支持全文检索，就得将数据表存储引擎改成MyISAM。修改很简单，一条语句即可.  </p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">alter table ta engine=myisam;</div></pre></td></tr></table></figure>
+</div></article></div></main><footer><div class="paginator"><a href="/2014/07/02/sqlite3在Android上的简单应用/" class="prev">PREV</a><a href="/2014/05/29/怎样实现自动提取文章关键词/" class="next">NEXT</a></div><div id="disqus_thread"></div><script>var disqus_shortname = 'hyyyblog';
+var disqus_identifier = '2014/06/25/SQL语句的总结/';
+var disqus_title = 'SQL的基本使用';
+var disqus_url = 'http://yoursite.com/2014/06/25/SQL语句的总结/';
+(function() {
+    var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+    dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();</script><script id="dsq-count-scr" src="//hyyyblog.disqus.com/count.js" async></script><div class="copyright"><p>© 2015 - 2017 <a href="http://yoursite.com">Hyyy</a>, powered by <a href="https://hexo.io/" target="_blank">Hexo</a> and <a href="https://github.com/pinggod/hexo-theme-apollo" target="_blank">hexo-theme-apollo</a>.</p></div></footer></div><script async src="//cdn.bootcss.com/mathjax/2.7.0/MathJax.js?config=TeX-MML-AM_CHTML" integrity="sha384-crwIf/BuaWM9rM65iM+dWFldgQ1Un8jWZMuh3puxb8TOY9+linwLoI7ZHZT+aekW" crossorigin="anonymous"></script><script>(function(b,o,i,l,e,r){b.GoogleAnalyticsObject=l;b[l]||(b[l]=function(){(b[l].q=b[l].q||[]).push(arguments)});b[l].l=+new Date;e=o.createElement(i);r=o.getElementsByTagName(i)[0];e.src='//www.google-analytics.com/analytics.js';r.parentNode.insertBefore(e,r)}(window,document,'script','ga'));ga('create',"UA-65933410-1",'auto');ga('send','pageview');</script></body></html>
