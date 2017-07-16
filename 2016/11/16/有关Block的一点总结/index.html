@@ -36,7 +36,7 @@
 <p>有拷贝就会有释放，<code>Block_copy()</code>对应的是<code>Block_release()</code>，其对应的辅助函数就是<code>copy()</code>和<code>dispose()</code>。</p>
 <h4 id="block中的weakSelf和strongSelf"><a href="#block中的weakSelf和strongSelf" class="headerlink" title="block中的weakSelf和strongSelf"></a>block中的weakSelf和strongSelf</h4><p>需要使用weakSelf，是因为防止循环引用，一般使用block的场景中，self会对block强引用，在block内部回调中，block又强引用了self，所以造成循环引用，使用weakSelf，可以打破这一闭环，使得block内部回调中不会对self发生强引用，就解决了问题。</p>
 <p>使用strongSelf，是因为外部使用了weakSelf，在Block内部回调中，这个weakSelf可能会被释放，造成接下来的操作无法完成，如果是KVO操作，还是引发崩溃。所以在Block内部需要使用strongSelf，防止weakSelf提前释放。需要注意的是，这个strongSelf的作用域在block内部回调，出了这个回调就会失效，所以这么写既能正常释放，又不会崩溃。</p>
-</div></article></div></main><footer><div class="paginator"><a href="/2016/12/10/浅谈iOS事件机制/" class="prev">PREV</a><a href="/2016/04/21/Swift学习之闭包/" class="next">NEXT</a></div><div id="disqus_thread"></div><script>var disqus_shortname = 'hyyyblog';
+</div></article></div></main><footer><div class="paginator"><a href="/2016/12/10/浅谈iOS事件机制/" class="prev">PREV</a><a href="/2016/10/03/load和initialize的特殊之处/" class="next">NEXT</a></div><div id="disqus_thread"></div><script>var disqus_shortname = 'hyyyblog';
 var disqus_identifier = '2016/11/16/有关Block的一点总结/';
 var disqus_title = '有关Block的一点总结';
 var disqus_url = 'http://yoursite.com/2016/11/16/有关Block的一点总结/';
