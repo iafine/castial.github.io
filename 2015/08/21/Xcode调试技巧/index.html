@@ -1,0 +1,24 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="X-UA-Compatible" content="IE=edge"><title> Xcode调试技巧 · Hyyy的技术博客</title><meta name="description" content="Xcode调试技巧 - Hyyy"><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="icon" href="/favicon.png"><link rel="stylesheet" href="/css/apollo.css"><link rel="search" type="application/opensearchdescription+xml" href="http://yoursite.com/atom.xml" title="Hyyy的技术博客"></head><body><div class="wrap"><header><a href="/" class="logo-link"><img src="/favicon.png" alt="logo"></a><ul class="nav nav-list"><li class="nav-list-item"><a href="/" target="_self" class="nav-list-link">博客</a></li><li class="nav-list-item"><a href="/archives/" target="_self" class="nav-list-link">归档</a></li><li class="nav-list-item"><a href="http://www.jianshu.com/u/eee3fae14bec" target="_blank" class="nav-list-link">简书</a></li><li class="nav-list-item"><a href="https://github.com/castial" target="_blank" class="nav-list-link">GITHUB</a></li><li class="nav-list-item"><a href="/atom.xml" target="_self" class="nav-list-link">RSS</a></li></ul></header><main class="container"><div class="post"><article class="post-block"><h1 class="post-title">Xcode调试技巧</h1><div class="post-info">Aug 21, 2015</div><div class="post-content"><blockquote>
+<p>俗话说，工欲善其事，必先利其器。在iOS开发中，良好的调试技巧是十分关键的。</p>
+</blockquote>
+<h3 id="LLDB"><a href="#LLDB" class="headerlink" title="LLDB"></a>LLDB</h3><h4 id="po"><a href="#po" class="headerlink" title="po"></a>po</h4><p><code>po</code>是<code>print object</code>的缩写，一般用的最多了。表示显示对象的描述。如果不存在，则为nil。在开发场景中，我们可以重写debugDescription方法，可以自定义打印log信息。</p>
+<p>另外，有一个<code>po</code>操作十分方便，如果需要查看视图层级关系，可以下面这个命令，十分方便：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">po [[self view] recursiveDescription]</div></pre></td></tr></table></figure>
+<h4 id="p"><a href="#p" class="headerlink" title="p"></a>p</h4><p><code>p</code>命令一般用于打印基本数据类型，很简单，就不多说了。</p>
+<h4 id="call"><a href="#call" class="headerlink" title="call"></a>call</h4><p><code>call</code>命令可以执行一段代码，比如我们打印123，可以这么做：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">call NSLog(@&quot;%@&quot;, @&quot;123&quot;);</div></pre></td></tr></table></figure>
+<p>一般我们需要在随时修改某个view的背景颜色，方便调试，我们可以这么干：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">call [self.view setBackgroundColor:[UIColor redColor]]</div></pre></td></tr></table></figure>
+<p>self.view 的背景颜色就发生了变化，神不神奇！</p>
+<h4 id="bt"><a href="#bt" class="headerlink" title="bt"></a>bt</h4><p><code>bt</code>命令可以打印当前堆栈相关信息，如果要打印所有线程堆栈信息，直接<code>bt all</code>即可。学习Runloop会用到这个。</p>
+<h4 id="image"><a href="#image" class="headerlink" title="image"></a>image</h4><p><code>image</code>一般用于寻址，通过栈地址来寻找对应的代码位置，不过一般不经常使用，直接添加一个全局断点可以解决绝大多数问题。</p>
+<h4 id="断点"><a href="#断点" class="headerlink" title="断点"></a>断点</h4><p>常用的就是全局断点了，再也不用担心跑下代码直接到main文件里去了，全局断点还是非常实用的。</p>
+</div></article></div></main><footer><div class="paginator"><a href="/2015/10/23/WebViewJavascriptBridge使用教程/" class="prev">PREV</a><a href="/2015/07/03/检测一串数字中是否有重复数字和递增递减组合/" class="next">NEXT</a></div><div id="disqus_thread"></div><script>var disqus_shortname = 'hyyyblog';
+var disqus_identifier = '2015/08/21/Xcode调试技巧/';
+var disqus_title = 'Xcode调试技巧';
+var disqus_url = 'http://yoursite.com/2015/08/21/Xcode调试技巧/';
+(function() {
+    var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+    dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();</script><script id="dsq-count-scr" src="//hyyyblog.disqus.com/count.js" async></script><div class="copyright"><p>© 2015 - 2017 <a href="http://yoursite.com">Hyyy</a>, powered by <a href="https://hexo.io/" target="_blank">Hexo</a> and <a href="https://github.com/pinggod/hexo-theme-apollo" target="_blank">hexo-theme-apollo</a>.</p></div></footer></div><script async src="//cdn.bootcss.com/mathjax/2.7.0/MathJax.js?config=TeX-MML-AM_CHTML" integrity="sha384-crwIf/BuaWM9rM65iM+dWFldgQ1Un8jWZMuh3puxb8TOY9+linwLoI7ZHZT+aekW" crossorigin="anonymous"></script><script>(function(b,o,i,l,e,r){b.GoogleAnalyticsObject=l;b[l]||(b[l]=function(){(b[l].q=b[l].q||[]).push(arguments)});b[l].l=+new Date;e=o.createElement(i);r=o.getElementsByTagName(i)[0];e.src='//www.google-analytics.com/analytics.js';r.parentNode.insertBefore(e,r)}(window,document,'script','ga'));ga('create',"UA-65933410-1",'auto');ga('send','pageview');</script></body></html>
